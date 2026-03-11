@@ -5,35 +5,39 @@ const ctx = canvas.getContext("2d");
 canvas.width = 640;
 canvas.height = 480;
 
-let prevX = null;
-let prevY = null;
-let drawMode = false;
+// drawing layer
+const drawCanvas = document.createElement("canvas");
+drawCanvas.width = 640;
+drawCanvas.height = 480;
+const drawCtx = drawCanvas.getContext("2d");
 
-// CTRL key toggle
+let prevX=null;
+let prevY=null;
+let drawMode=false;
+
+// CTRL toggle
 document.addEventListener("keydown",(e)=>{
-if(e.key === "Control"){
-drawMode = true;
-}
+if(e.key==="Control") drawMode=true;
 });
 
 document.addEventListener("keyup",(e)=>{
-if(e.key === "Control"){
-drawMode = false;
-prevX = null;
-prevY = null;
+if(e.key==="Control"){
+drawMode=false;
+prevX=null;
+prevY=null;
 }
 });
 
-// Start camera
+// start camera
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
-video.srcObject = stream;
+video.srcObject=stream;
 video.play();
 });
 
-// Setup MediaPipe Hands
+// mediapipe setup
 const hands = new Hands({
-locateFile: (file)=>{
+locateFile:(file)=>{
 return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 }
 });
@@ -44,40 +48,40 @@ minDetectionConfidence:0.7,
 minTrackingConfidence:0.7
 });
 
-// Hand tracking results
 hands.onResults((results)=>{
 
-// draw camera frame
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
+// draw camera
+ctx.drawImage(video,0,0,640,480);
+
+// draw saved drawing
+ctx.drawImage(drawCanvas,0,0);
 
 if(results.multiHandLandmarks){
 
-let indexFinger = results.multiHandLandmarks[0][8];
+let finger=results.multiHandLandmarks[0][8];
 
-let x = indexFinger.x * canvas.width;
-let y = indexFinger.y * canvas.height;
+let x=finger.x*640;
+let y=finger.y*480;
 
 if(drawMode){
 
-if(prevX !== null){
+if(prevX!=null){
 
-ctx.beginPath();
-ctx.moveTo(prevX,prevY);
-ctx.lineTo(x,y);
+drawCtx.beginPath();
+drawCtx.moveTo(prevX,prevY);
+drawCtx.lineTo(x,y);
 
-ctx.strokeStyle = "#00ffff";
-ctx.lineWidth = 6;
+drawCtx.strokeStyle="#00ffff";
+drawCtx.lineWidth=6;
+drawCtx.shadowColor="#00ffff";
+drawCtx.shadowBlur=20;
 
-// glow effect
-ctx.shadowColor = "#00ffff";
-ctx.shadowBlur = 20;
-
-ctx.stroke();
+drawCtx.stroke();
 
 }
 
-prevX = x;
-prevY = y;
+prevX=x;
+prevY=y;
 
 }
 
@@ -85,10 +89,10 @@ prevY = y;
 
 });
 
-// Camera processing loop
-video.onloadeddata = ()=>{
-const camera = new Camera(video,{
-onFrame: async ()=>{
+// camera loop
+video.onloadeddata=()=>{
+const camera=new Camera(video,{
+onFrame:async()=>{
 await hands.send({image:video});
 },
 width:640,
