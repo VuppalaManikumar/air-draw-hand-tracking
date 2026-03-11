@@ -1,1 +1,14 @@
+body{
+text-align:center;
+font-family:Arial;
+background:#111;
+color:white;
+}
 
+video{
+display:none;
+}
+
+canvas{
+border:2px solid white;
+}
