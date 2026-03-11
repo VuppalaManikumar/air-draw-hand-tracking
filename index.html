@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>Air Draw Hand Tracking</title>
+<title>Air Draw</title>
 
 <style>
-
 body{
 background:black;
 color:white;
@@ -20,19 +18,17 @@ border:2px solid white;
 video{
 display:none;
 }
-
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
 </head>
 
 <body>
 
 <h2>Air Drawing ✨</h2>
-<p>Hold CTRL and move your index finger</p>
+<p>Hold CTRL and move index finger</p>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="drawCanvas"></canvas>
