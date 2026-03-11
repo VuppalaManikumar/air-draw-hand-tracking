@@ -5,17 +5,17 @@ const ctx = canvas.getContext("2d");
 canvas.width = 640;
 canvas.height = 480;
 
-// drawing layer
-const drawCanvas = document.createElement("canvas");
-drawCanvas.width = 640;
-drawCanvas.height = 480;
-const drawCtx = drawCanvas.getContext("2d");
+// drawing memory layer
+const drawLayer = document.createElement("canvas");
+drawLayer.width = 640;
+drawLayer.height = 480;
+const drawCtx = drawLayer.getContext("2d");
 
-let prevX=null;
-let prevY=null;
-let drawMode=false;
+let prevX = null;
+let prevY = null;
+let drawMode = false;
 
-// CTRL toggle
+// CTRL key
 document.addEventListener("keydown",(e)=>{
 if(e.key==="Control") drawMode=true;
 });
@@ -28,14 +28,17 @@ prevY=null;
 }
 });
 
-// start camera
+// start webcam
 navigator.mediaDevices.getUserMedia({video:true})
 .then(stream=>{
 video.srcObject=stream;
 video.play();
+})
+.catch(err=>{
+console.log("Camera error:",err);
 });
 
-// mediapipe setup
+// setup mediapipe
 const hands = new Hands({
 locateFile:(file)=>{
 return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
@@ -50,18 +53,18 @@ minTrackingConfidence:0.7
 
 hands.onResults((results)=>{
 
-// draw camera
+// draw camera frame
 ctx.drawImage(video,0,0,640,480);
 
-// draw saved drawing
-ctx.drawImage(drawCanvas,0,0);
+// draw saved lines
+ctx.drawImage(drawLayer,0,0);
 
 if(results.multiHandLandmarks){
 
-let finger=results.multiHandLandmarks[0][8];
+let finger = results.multiHandLandmarks[0][8];
 
-let x=finger.x*640;
-let y=finger.y*480;
+let x = finger.x * 640;
+let y = finger.y * 480;
 
 if(drawMode){
 
@@ -89,14 +92,17 @@ prevY=y;
 
 });
 
-// camera loop
-video.onloadeddata=()=>{
-const camera=new Camera(video,{
-onFrame:async()=>{
+// start mediapipe camera loop
+video.addEventListener("loadeddata",()=>{
+
+const camera = new Camera(video,{
+onFrame: async ()=>{
 await hands.send({image:video});
 },
 width:640,
 height:480
 });
+
 camera.start();
-};
+
+});
