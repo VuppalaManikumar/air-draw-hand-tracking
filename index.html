@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Air Draw Hand Tracking</title>
-<link rel="stylesheet" href="style.css">
+<title>Air Drawing with Hand</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<style>
+body{
+text-align:center;
+background:black;
+color:white;
+font-family:Arial;
+}
+
+canvas{
+border:2px solid white;
+}
+
+video{
+display:none;
+}
+</style>
+
 </head>
 
 <body>
 
 <h1>Air Drawing with Hand</h1>
-<p>Hold CTRL and move your index finger to draw</p>
+<p>Hold CTRL and move your finger</p>
 
+<video id="video" autoplay playsinline></video>
 <canvas id="drawCanvas"></canvas>
-<video id="video" autoplay></video>
 
 <script src="script.js"></script>
 
