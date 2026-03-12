@@ -1,108 +1,97 @@
-const video = document.getElementById("video");
-const canvas = document.getElementById("drawCanvas");
-const ctx = canvas.getContext("2d");
+const videoElement = document.createElement("video");
+const canvasElement = document.getElementById("canvas");
+const canvasCtx = canvasElement.getContext("2d");
 
-canvas.width = 640;
-canvas.height = 480;
+let drawing = false;
+let lastX = 0;
+let lastY = 0;
 
-// drawing memory layer
-const drawLayer = document.createElement("canvas");
-drawLayer.width = 640;
-drawLayer.height = 480;
-const drawCtx = drawLayer.getContext("2d");
+canvasCtx.lineWidth = 5;
+canvasCtx.lineCap = "round";
+canvasCtx.strokeStyle = "red";
 
-let prevX = null;
-let prevY = null;
-let drawMode = false;
+async function setupCamera() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: true
+    });
 
-// CTRL key
-document.addEventListener("keydown",(e)=>{
-if(e.key==="Control") drawMode=true;
-});
-
-document.addEventListener("keyup",(e)=>{
-if(e.key==="Control"){
-drawMode=false;
-prevX=null;
-prevY=null;
+    videoElement.srcObject = stream;
+    videoElement.play();
 }
+
+function drawLine(x, y) {
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(lastX, lastY);
+    canvasCtx.lineTo(x, y);
+    canvasCtx.stroke();
+}
+
+function onResults(results) {
+
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+    canvasCtx.drawImage(
+        results.image,
+        0,
+        0,
+        canvasElement.width,
+        canvasElement.height
+    );
+
+    if (results.multiHandLandmarks) {
+
+        for (const landmarks of results.multiHandLandmarks) {
+
+            const indexFinger = landmarks[8];
+
+            const x = indexFinger.x * canvasElement.width;
+            const y = indexFinger.y * canvasElement.height;
+
+            if (drawing) {
+                drawLine(x, y);
+            }
+
+            lastX = x;
+            lastY = y;
+        }
+    }
+}
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Control") {
+        drawing = true;
+    }
 });
 
-// start webcam
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-video.srcObject=stream;
-video.play();
-})
-.catch(err=>{
-console.log("Camera error:",err);
+document.addEventListener("keyup", (event) => {
+    if (event.key === "Control") {
+        drawing = false;
+    }
 });
 
-// setup mediapipe
 const hands = new Hands({
-locateFile:(file)=>{
-return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-}
+    locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+    }
 });
 
 hands.setOptions({
-maxNumHands:1,
-minDetectionConfidence:0.7,
-minTrackingConfidence:0.7
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
 });
 
-hands.onResults((results)=>{
+hands.onResults(onResults);
 
-// draw camera frame
-ctx.drawImage(video,0,0,640,480);
-
-// draw saved lines
-ctx.drawImage(drawLayer,0,0);
-
-if(results.multiHandLandmarks){
-
-let finger = results.multiHandLandmarks[0][8];
-
-let x = finger.x * 640;
-let y = finger.y * 480;
-
-if(drawMode){
-
-if(prevX!=null){
-
-drawCtx.beginPath();
-drawCtx.moveTo(prevX,prevY);
-drawCtx.lineTo(x,y);
-
-drawCtx.strokeStyle="#00ffff";
-drawCtx.lineWidth=6;
-drawCtx.shadowColor="#00ffff";
-drawCtx.shadowBlur=20;
-
-drawCtx.stroke();
-
-}
-
-prevX=x;
-prevY=y;
-
-}
-
-}
-
+const camera = new Camera(videoElement, {
+    onFrame: async () => {
+        await hands.send({ image: videoElement });
+    },
+    width: 640,
+    height: 480
 });
 
-// start mediapipe camera loop
-video.addEventListener("loadeddata",()=>{
-
-const camera = new Camera(video,{
-onFrame: async ()=>{
-await hands.send({image:video});
-},
-width:640,
-height:480
-});
-
-camera.start();
-
+setupCamera().then(() => {
+    camera.start();
 });
