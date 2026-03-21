@@ -1,44 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air Draw — Hand Tracking</title>
+  <link rel="stylesheet" href="style.css" />
 
-<title>Air Draw</title>
-
-<style>
-
-body{
-background:black;
-color:white;
-text-align:center;
-font-family:Arial;
-}
-
-canvas{
-border:2px solid white;
-}
-
-video{
-display:none;
-}
-
-</style>
-
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 </head>
-
 <body>
 
-<h2>Air Drawing</h2>
-<p>Hold CTRL and move index finger</p>
+  <header class="header">
+    <div class="header-left">
+      <h1 class="logo">✋ Air Draw</h1>
+      <span class="version">v2.0</span>
+    </div>
+    <div class="header-right">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Starting camera...</span>
+    </div>
+  </header>
 
-<video id="video" autoplay playsinline></video>
+  <main class="main">
 
-<canvas id="drawCanvas" width="640" height="480"></canvas>
+    <!-- Canvas area -->
+    <div class="canvas-wrapper">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="drawCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
 
-<script src="script.js"></script>
+      <!-- Gesture hint overlay -->
+      <div class="gesture-hints" id="gestureHints">
+        <div class="hint-item">☝️ <span>1 finger = Draw</span></div>
+        <div class="hint-item">✌️ <span>2 fingers = Eraser</span></div>
+        <div class="hint-item">✊ <span>Fist = Pause</span></div>
+        <div class="hint-item">🖐️ <span>Open hand = Clear</span></div>
+      </div>
+    </div>
 
+    <!-- Controls sidebar -->
+    <aside class="controls">
+
+      <section class="control-section">
+        <h3 class="section-title">Colors</h3>
+        <div class="color-grid" id="colorGrid">
+          <button class="color-btn active" data-color="#ff3b3b" style="--c:#ff3b3b" title="Red">
+            <span class="color-swatch"></span><span class="color-label">Red</span>
+          </button>
+          <button class="color-btn" data-color="#00e676" style="--c:#00e676" title="Green">
+            <span class="color-swatch"></span><span class="color-label">Green</span>
+          </button>
+          <button class="color-btn" data-color="#2979ff" style="--c:#2979ff" title="Blue">
+            <span class="color-swatch"></span><span class="color-label">Blue</span>
+          </button>
+          <button class="color-btn" data-color="#ffea00" style="--c:#ffea00" title="Yellow">
+            <span class="color-swatch"></span><span class="color-label">Yellow</span>
+          </button>
+          <button class="color-btn" data-color="#ff6d00" style="--c:#ff6d00" title="Orange">
+            <span class="color-swatch"></span><span class="color-label">Orange</span>
+          </button>
+          <button class="color-btn" data-color="#e040fb" style="--c:#e040fb" title="Purple">
+            <span class="color-swatch"></span><span class="color-label">Purple</span>
+          </button>
+          <button class="color-btn" data-color="#ffffff" style="--c:#ffffff" title="White">
+            <span class="color-swatch"></span><span class="color-label">White</span>
+          </button>
+          <button class="color-btn" data-color="#00e5ff" style="--c:#00e5ff" title="Cyan">
+            <span class="color-swatch"></span><span class="color-label">Cyan</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h3 class="section-title">Brush Size</h3>
+        <div class="slider-row">
+          <input type="range" id="brushSize" min="2" max="30" value="5" class="slider" />
+          <span class="slider-value" id="brushValue">5px</span>
+        </div>
+        <div class="brush-preview-wrap">
+          <canvas id="brushPreview" width="80" height="80"></canvas>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h3 class="section-title">Tools</h3>
+        <div class="tool-grid">
+          <button class="tool-btn active" id="btnDraw">
+            <span class="tool-icon">✏️</span> Draw
+          </button>
+          <button class="tool-btn" id="btnEraser">
+            <span class="tool-icon">⬜</span> Eraser
+          </button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h3 class="section-title">Actions</h3>
+        <button class="action-btn danger" id="btnClear">🗑️ Clear Canvas</button>
+        <button class="action-btn" id="btnSave">💾 Save Drawing</button>
+        <button class="action-btn" id="btnToggleHints">💡 Toggle Hints</button>
+      </section>
+
+      <section class="control-section stats-section">
+        <div class="stat"><span class="stat-label">FPS</span><span class="stat-val" id="fpsVal">--</span></div>
+        <div class="stat"><span class="stat-label">Mode</span><span class="stat-val" id="modeVal">Draw</span></div>
+        <div class="stat"><span class="stat-label">Hand</span><span class="stat-val" id="handVal">None</span></div>
+      </section>
+
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
