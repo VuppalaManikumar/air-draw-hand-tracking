@@ -291,42 +291,73 @@ camera.start().then(() => {
   console.error(err);
 });
 
-// ── CTRL key ──────────────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Control') ctrlHeld = true;
+// ── CTRL key — hold to draw, release to stop ──────────────────────────────────
+// We track CTRL via both keydown/keyup AND check e.ctrlKey on every event
+// because some browsers swallow standalone Control keydown events.
 
-  switch (e.key.toLowerCase()) {
-    case 'c':
-      if (!e.ctrlKey) {
+document.addEventListener('keydown', e => {
+  // Update ctrlHeld on ANY event where ctrlKey modifier is active
+  if (e.key === 'Control' || e.ctrlKey) {
+    if (!ctrlHeld) {
+      ctrlHeld = true;
+      // Don't reset lastX/lastY here — start drawing from current finger pos
+    }
+  }
+
+  // Prevent browser shortcuts while CTRL is used for drawing
+  // Only block Ctrl+S and Ctrl+C (save/copy) to avoid accidents
+  if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    saveDrawing();
+    return;
+  }
+  if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+    e.preventDefault(); // don't let browser copy
+    return;
+  }
+
+  // Regular shortcuts (only when CTRL is NOT held)
+  if (!e.ctrlKey) {
+    switch (e.key.toLowerCase()) {
+      case 'c':
         offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
         drawOffsetX = 0; drawOffsetY = 0; drawScale = 1.0;
         lastX = lastY = null;
         renderDrawLayer();
-      }
-      break;
-    case 'e': eraserMode = !eraserMode; updateToolUI(); break;
-    case 's': if (!e.ctrlKey) saveDrawing(); break;
-    case 'h':
-      hintsVisible = !hintsVisible;
-      document.getElementById('gestureHints').classList.toggle('hidden', !hintsVisible);
-      break;
-    case '+': case '=':
-      brushSize = Math.min(brushSize + 2, 30);
-      document.getElementById('brushSize').value = brushSize;
-      document.getElementById('brushValue').textContent = brushSize + 'px';
-      updateBrushPreview(); break;
-    case '-':
-      brushSize = Math.max(brushSize - 2, 2);
-      document.getElementById('brushSize').value = brushSize;
-      document.getElementById('brushValue').textContent = brushSize + 'px';
-      updateBrushPreview(); break;
+        break;
+      case 'e': eraserMode = !eraserMode; updateToolUI(); break;
+      case 's': saveDrawing(); break;
+      case 'h':
+        hintsVisible = !hintsVisible;
+        document.getElementById('gestureHints').classList.toggle('hidden', !hintsVisible);
+        break;
+      case '+': case '=':
+        brushSize = Math.min(brushSize + 2, 30);
+        document.getElementById('brushSize').value = brushSize;
+        document.getElementById('brushValue').textContent = brushSize + 'px';
+        updateBrushPreview(); break;
+      case '-':
+        brushSize = Math.max(brushSize - 2, 2);
+        document.getElementById('brushSize').value = brushSize;
+        document.getElementById('brushValue').textContent = brushSize + 'px';
+        updateBrushPreview(); break;
+    }
   }
 });
 
 document.addEventListener('keyup', e => {
   if (e.key === 'Control') {
     ctrlHeld = false;
-    lastX = lastY = null;   // stop stroke on CTRL release
+    lastX = lastY = null;   // break stroke so next CTRL press starts fresh
+    showFlash('✋ CTRL released — drawing stopped');
+  }
+});
+
+// Extra safety: if window loses focus, release CTRL so drawing doesn't get stuck
+window.addEventListener('blur', () => {
+  if (ctrlHeld) {
+    ctrlHeld = false;
+    lastX = lastY = null;
   }
 });
 

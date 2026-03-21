@@ -2,6 +2,33 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time
+import threading
+
+# ── CTRL key tracking using pynput (works on Windows, Mac, Linux) ─────────────
+ctrl_held = False
+try:
+    from pynput import keyboard as pynput_kb
+
+    def on_press(key):
+        global ctrl_held
+        if key in (pynput_kb.Key.ctrl, pynput_kb.Key.ctrl_l, pynput_kb.Key.ctrl_r):
+            ctrl_held = True
+
+    def on_release(key):
+        global ctrl_held
+        if key in (pynput_kb.Key.ctrl, pynput_kb.Key.ctrl_l, pynput_kb.Key.ctrl_r):
+            ctrl_held = False
+
+    listener = pynput_kb.Listener(on_press=on_press, on_release=on_release)
+    listener.daemon = True
+    listener.start()
+    PYNPUT_OK = True
+    print("[INFO] CTRL key tracking: pynput active")
+
+except ImportError:
+    PYNPUT_OK = False
+    print("[WARN] pynput not installed. CTRL key won't work.")
+    print("       Install with: pip install pynput")
 
 # ── MediaPipe ─────────────────────────────────────────────────────────────────
 mp_hands = mp.solutions.hands
@@ -54,8 +81,7 @@ draw_offset_y  = 0
 prev_pinch_dist = None
 draw_scale      = 1.0
 
-# CTRL key state (checked via waitKey)
-ctrl_held = False
+# ctrl_held is set by pynput listener above
 
 
 def fingers_up(lm, W, H):
@@ -260,13 +286,6 @@ while True:
     cv2.imshow("Air Draw — Hand Tracking", frame)
 
     key = cv2.waitKey(1) & 0xFF
-
-    # CTRL detection via key code (29 = right ctrl, some systems use 0xFF & code)
-    # Use keyboard state via cv2 + check if key pressed is ctrl (17)
-    if key == 17:          # CTRL pressed
-        ctrl_held = True
-    elif ctrl_held and key != 255:
-        ctrl_held = False   # any other key releases ctrl
 
     if key == ord('q') or key == 27:
         break
